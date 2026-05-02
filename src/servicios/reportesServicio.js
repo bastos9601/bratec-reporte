@@ -58,3 +58,26 @@ export const obtenerReportes = async (tecnicoId = null) => {
     throw error
   }
 }
+
+export const eliminarReporte = async (reporteId, imagenUrl) => {
+  try {
+    // Si hay imagen, eliminarla del storage
+    if (imagenUrl) {
+      const nombreArchivo = imagenUrl.split('/').pop()
+      await supabase.storage
+        .from('reportes')
+        .remove([nombreArchivo])
+    }
+
+    // Eliminar el reporte de la base de datos
+    const { error } = await supabase
+      .from('reportes')
+      .delete()
+      .eq('id', reporteId)
+
+    if (error) throw error
+  } catch (error) {
+    console.error('Error al eliminar reporte:', error)
+    throw error
+  }
+}

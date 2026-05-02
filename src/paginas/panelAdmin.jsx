@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { obtenerReportes } from '../servicios/reportesServicio'
+import { obtenerReportes, eliminarReporte } from '../servicios/reportesServicio'
 import { crearTecnico, obtenerTodosUsuarios, cambiarEstadoUsuario, actualizarUsuario, eliminarUsuario } from '../servicios/usuariosServicio'
 import { useAuth } from '../contexto/authContexto'
 import ListaReportes from '../componentes/listaReportes'
@@ -24,7 +24,9 @@ export default function PanelAdmin({ vistaActual, setVistaActual }) {
   const [toast, setToast] = useState(null)
   const [modalEditar, setModalEditar] = useState(false)
   const [modalEliminar, setModalEliminar] = useState(false)
+  const [modalEliminarReporte, setModalEliminarReporte] = useState(false)
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null)
+  const [reporteSeleccionado, setReporteSeleccionado] = useState(null)
   const [nombreEditar, setNombreEditar] = useState('')
   const [emailEditar, setEmailEditar] = useState('')
   const [busquedaTecnico, setBusquedaTecnico] = useState('')
@@ -161,6 +163,22 @@ export default function PanelAdmin({ vistaActual, setVistaActual }) {
       await cargarDatos()
     } catch (error) {
       setToast({ mensaje: 'Error al eliminar usuario', tipo: 'error' })
+    }
+  }
+
+  const abrirModalEliminarReporte = (reporte) => {
+    setReporteSeleccionado(reporte)
+    setModalEliminarReporte(true)
+  }
+
+  const manejarEliminarReporte = async () => {
+    try {
+      await eliminarReporte(reporteSeleccionado.id, reporteSeleccionado.imagen_url)
+      setToast({ mensaje: '✅ Reporte eliminado exitosamente', tipo: 'success' })
+      setModalEliminarReporte(false)
+      await cargarDatos()
+    } catch (error) {
+      setToast({ mensaje: 'Error al eliminar reporte', tipo: 'error' })
     }
   }
 
@@ -320,7 +338,11 @@ export default function PanelAdmin({ vistaActual, setVistaActual }) {
               </div>
             </Tarjeta>
 
-            <ListaReportes reportes={reportesFiltrados} />
+            <ListaReportes 
+              reportes={reportesFiltrados} 
+              onEliminar={abrirModalEliminarReporte}
+              esAdmin={true}
+            />
           </>
         ) : (
           <>
@@ -389,6 +411,32 @@ export default function PanelAdmin({ vistaActual, setVistaActual }) {
               Cancelar
             </Boton>
             <Boton type="button" tipo="danger" onClick={manejarEliminar} className="flex-1">
+              Eliminar
+            </Boton>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={modalEliminarReporte} onClose={() => setModalEliminarReporte(false)} titulo="Eliminar Reporte">
+        <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex gap-3">
+              <svg className="w-6 h-6 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div>
+                <h4 className="font-semibold text-red-900 mb-1">¿Estás seguro?</h4>
+                <p className="text-sm text-red-700">
+                  Esta acción eliminará permanentemente el reporte de <strong>{reporteSeleccionado?.lugar}</strong> y no se puede deshacer.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Boton type="button" onClick={() => setModalEliminarReporte(false)} className="flex-1">
+              Cancelar
+            </Boton>
+            <Boton type="button" tipo="danger" onClick={manejarEliminarReporte} className="flex-1">
               Eliminar
             </Boton>
           </div>
