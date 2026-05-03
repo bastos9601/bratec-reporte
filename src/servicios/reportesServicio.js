@@ -1,26 +1,37 @@
 import { supabase } from './supabaseCliente'
 
-export const crearReporte = async (reporte, archivo) => {
-  let imagenUrl = null
+export const crearReporte = async (reporte, archivos) => {
+  const imagenesUrls = []
 
-  if (archivo) {
-    const nombreArchivo = `${Date.now()}_${archivo.name}`
-    const { data, error } = await supabase.storage
-      .from('reportes')
-      .upload(nombreArchivo, archivo)
+  // Subir múltiples archivos si existen
+  if (archivos && archivos.length > 0) {
+    for (const archivo of archivos) {
+      const nombreArchivo = `${Date.now()}_${Math.random().toString(36).substring(7)}_${archivo.name}`
+      const { data, error } = await supabase.storage
+        .from('reportes')
+        .upload(nombreArchivo, archivo)
 
-    if (error) throw error
+      if (error) {
+        console.error('Error al subir archivo:', error)
+        continue // Continuar con las demás fotos si una falla
+      }
 
-    const { data: urlData } = supabase.storage
-      .from('reportes')
-      .getPublicUrl(nombreArchivo)
-    
-    imagenUrl = urlData.publicUrl
+      const { data: urlData } = supabase.storage
+        .from('reportes')
+        .getPublicUrl(nombreArchivo)
+      
+      imagenesUrls.push(urlData.publicUrl)
+    }
   }
 
+  // Guardar con array de URLs y también la primera como imagen_url para compatibilidad
   const { data, error } = await supabase
     .from('reportes')
-    .insert([{ ...reporte, imagen_url: imagenUrl }])
+    .insert([{ 
+      ...reporte, 
+      imagenes_urls: imagenesUrls,
+      imagen_url: imagenesUrls.length > 0 ? imagenesUrls[0] : null // Primera imagen para compatibilidad
+    }])
     .select()
 
   if (error) throw error
@@ -59,14 +70,28 @@ export const obtenerReportes = async (tecnicoId = null) => {
   }
 }
 
-export const eliminarReporte = async (reporteId, imagenUrl) => {
+export const eliminarReporte = async (reporteId, imagenUrl, imagenesUrls) => {
   try {
-    // Si hay imagen, eliminarla del storage
-    if (imagenUrl) {
+    // Eliminar todas las imágenes del storage
+    const imagenesAEliminar = []
+    
+    // Agregar imágenes del array
+    if (imagenesUrls && imagenesUrls.length > 0) {
+      imagenesUrls.forEach(url => {
+        const nombreArchivo = url.split('/').pop()
+        imagenesAEliminar.push(nombreArchivo)
+      })
+    } else if (imagenUrl) {
+      // Fallback a imagen_url si no hay array
       const nombreArchivo = imagenUrl.split('/').pop()
+      imagenesAEliminar.push(nombreArchivo)
+    }
+
+    // Eliminar archivos del storage
+    if (imagenesAEliminar.length > 0) {
       await supabase.storage
         .from('reportes')
-        .remove([nombreArchivo])
+        .remove(imagenesAEliminar)
     }
 
     // Eliminar el reporte de la base de datos

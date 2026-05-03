@@ -173,7 +173,11 @@ export default function PanelAdmin({ vistaActual, setVistaActual }) {
 
   const manejarEliminarReporte = async () => {
     try {
-      await eliminarReporte(reporteSeleccionado.id, reporteSeleccionado.imagen_url)
+      await eliminarReporte(
+        reporteSeleccionado.id, 
+        reporteSeleccionado.imagen_url,
+        reporteSeleccionado.imagenes_urls
+      )
       setToast({ mensaje: '✅ Reporte eliminado exitosamente', tipo: 'success' })
       setModalEliminarReporte(false)
       await cargarDatos()

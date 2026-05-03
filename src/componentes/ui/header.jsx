@@ -8,11 +8,11 @@ export default function Header({ titulo, usuario }) {
         </div>
         <div className="flex items-center gap-3 px-3 sm:px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
           <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
-            {usuario?.email?.[0]?.toUpperCase() || 'U'}
+            {usuario?.nombre ? usuario.nombre[0].toUpperCase() : usuario?.email?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="text-left">
             <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate max-w-[150px] sm:max-w-none">
-              {usuario?.email}
+              {usuario?.nombre || usuario?.email}
             </p>
             <p className="text-xs text-gray-500 capitalize">{usuario?.rol}</p>
           </div>

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Tarjeta from './ui/tarjeta'
 import Boton from './ui/boton'
 
@@ -16,78 +17,157 @@ export default function ListaReportes({ reportes, onEliminar, esAdmin = false })
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {reportes.map((reporte) => (
-        <Tarjeta key={reporte.id} hover className="overflow-hidden flex flex-col">
-          {reporte.imagen_url ? (
-            <div className="relative -mx-6 -mt-6 mb-4 h-48 overflow-hidden bg-gray-100">
-              <img
-                src={reporte.imagen_url}
-                alt="Reporte"
-                className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-              />
-            </div>
-          ) : (
-            <div className="relative -mx-6 -mt-6 mb-4 h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-              <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+      {reportes.map((reporte) => {
+        const imagenes = reporte.imagenes_urls || (reporte.imagen_url ? [reporte.imagen_url] : [])
+        return (
+          <TarjetaReporte 
+            key={reporte.id} 
+            reporte={reporte} 
+            imagenes={imagenes}
+            onEliminar={onEliminar}
+            esAdmin={esAdmin}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function TarjetaReporte({ reporte, imagenes, onEliminar, esAdmin }) {
+  const [imagenActual, setImagenActual] = useState(0)
+
+  const siguienteImagen = (e) => {
+    e.stopPropagation()
+    setImagenActual((prev) => (prev + 1) % imagenes.length)
+  }
+
+  const anteriorImagen = (e) => {
+    e.stopPropagation()
+    setImagenActual((prev) => (prev - 1 + imagenes.length) % imagenes.length)
+  }
+
+  const cambiarImagenIndicador = (e, index) => {
+    e.stopPropagation()
+    setImagenActual(index)
+  }
+
+  return (
+    <Tarjeta hover className="overflow-hidden flex flex-col">
+      {imagenes.length > 0 ? (
+        <div className="relative -mx-6 -mt-6 mb-4 h-48 overflow-hidden bg-gray-100">
+          <img
+            src={imagenes[imagenActual]}
+            alt={`Reporte ${imagenActual + 1}`}
+            className="w-full h-full object-cover transition-transform duration-300"
+          />
+          
+          {/* Botón para ampliar imagen */}
+          
+          {/* Controles del carrusel */}
+          {imagenes.length > 1 && (
+            <>
+              {/* Botón anterior */}
+              <button
+                onClick={anteriorImagen}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full transition-all z-10"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              {/* Botón siguiente */}
+              <button
+                onClick={siguienteImagen}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full transition-all z-10"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
+              {/* Indicadores */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                {imagenes.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => cambiarImagenIndicador(e, index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === imagenActual 
+                        ? 'bg-white w-6' 
+                        : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {/* Contador */}
+              <div className="absolute top-2 left-2 px-2 py-1 bg-black bg-opacity-60 text-white text-xs rounded-lg z-10">
+                {imagenActual + 1} / {imagenes.length}
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="relative -mx-6 -mt-6 mb-4 h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+          <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+      )}
+      
+      <div className="space-y-3 flex-1 flex flex-col">
+        <div className="flex items-start gap-2">
+          <svg className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <h3 className="font-bold text-lg text-gray-900 leading-tight">{reporte.lugar}</h3>
+        </div>
+        
+        <p className="text-gray-600 text-sm leading-relaxed flex-1">{reporte.descripcion}</p>
+        
+        <div className="pt-3 border-t border-gray-100 space-y-2">
+          {reporte.tecnico && (
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-6 h-6 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                {reporte.tecnico.nombre ? reporte.tecnico.nombre[0].toUpperCase() : reporte.tecnico.email[0].toUpperCase()}
+              </div>
+              <span className="text-gray-700 font-medium">
+                {reporte.tecnico.nombre || reporte.tecnico.email}
+              </span>
             </div>
           )}
           
-          <div className="space-y-3 flex-1 flex flex-col">
-            <div className="flex items-start gap-2">
-              <svg className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <h3 className="font-bold text-lg text-gray-900 leading-tight">{reporte.lugar}</h3>
-            </div>
-            
-            <p className="text-gray-600 text-sm leading-relaxed flex-1">{reporte.descripcion}</p>
-            
-            <div className="pt-3 border-t border-gray-100 space-y-2">
-              {reporte.tecnico && (
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-6 h-6 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                    {reporte.tecnico.nombre ? reporte.tecnico.nombre[0].toUpperCase() : reporte.tecnico.email[0].toUpperCase()}
-                  </div>
-                  <span className="text-gray-700 font-medium">
-                    {reporte.tecnico.nombre || reporte.tecnico.email}
-                  </span>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {new Date(reporte.created_at).toLocaleString('es-ES', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </div>
-
-              {esAdmin && onEliminar && (
-                <div className="pt-2">
-                  <Boton
-                    tipo="danger"
-                    onClick={() => onEliminar(reporte)}
-                    className="w-full text-sm py-2"
-                  >
-                    <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Eliminar
-                  </Boton>
-                </div>
-              )}
-            </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {new Date(reporte.created_at).toLocaleString('es-ES', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
           </div>
-        </Tarjeta>
-      ))}
-    </div>
+
+          {esAdmin && onEliminar && (
+            <div className="pt-2">
+              <Boton
+                tipo="danger"
+                onClick={() => onEliminar(reporte)}
+                className="w-full text-sm py-2"
+              >
+                <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar
+              </Boton>
+            </div>
+          )}
+        </div>
+      </div>
+    </Tarjeta>
   )
 }
