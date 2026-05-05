@@ -1,8 +1,16 @@
 import { useState } from 'react'
 import Tarjeta from './ui/tarjeta'
 import Boton from './ui/boton'
+import ModalImagenes from './ui/modalImagenes'
 
 export default function ListaReportes({ reportes, onEliminar, esAdmin = false }) {
+  const [modalData, setModalData] = useState({
+    abierto: false,
+    imagenes: [],
+    index: 0,
+    reporte: null
+  })
+
   if (!reportes || reportes.length === 0) {
     return (
       <Tarjeta className="text-center py-16">
@@ -16,24 +24,40 @@ export default function ListaReportes({ reportes, onEliminar, esAdmin = false })
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {reportes.map((reporte) => {
-        const imagenes = reporte.imagenes_urls || (reporte.imagen_url ? [reporte.imagen_url] : [])
-        return (
-          <TarjetaReporte 
-            key={reporte.id} 
-            reporte={reporte} 
-            imagenes={imagenes}
-            onEliminar={onEliminar}
-            esAdmin={esAdmin}
-          />
-        )
-      })}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {reportes.map((reporte) => {
+          const imagenes = reporte.imagenes_urls || (reporte.imagen_url ? [reporte.imagen_url] : [])
+          return (
+            <TarjetaReporte 
+              key={reporte.id} 
+              reporte={reporte} 
+              imagenes={imagenes}
+              onEliminar={onEliminar}
+              esAdmin={esAdmin}
+              onAbrirModal={(index) => setModalData({
+                abierto: true,
+                imagenes,
+                index,
+                reporte
+              })}
+            />
+          )
+        })}
+      </div>
+
+      <ModalImagenes
+        isOpen={modalData.abierto}
+        onClose={() => setModalData(prev => ({ ...prev, abierto: false }))}
+        imagenes={modalData.imagenes}
+        imagenInicial={modalData.index}
+        reporte={modalData.reporte}
+      />
+    </>
   )
 }
 
-function TarjetaReporte({ reporte, imagenes, onEliminar, esAdmin }) {
+function TarjetaReporte({ reporte, imagenes, onEliminar, esAdmin, onAbrirModal }) {
   const [imagenActual, setImagenActual] = useState(0)
 
   const siguienteImagen = (e) => {
@@ -151,6 +175,24 @@ function TarjetaReporte({ reporte, imagenes, onEliminar, esAdmin }) {
               minute: '2-digit'
             })}
           </div>
+
+          {/* Botón para ver fotos en modal */}
+          {imagenes.length > 0 && (
+            <div className="pt-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onAbrirModal(imagenActual)
+                }}
+                className="w-full py-2 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Ver {imagenes.length} {imagenes.length === 1 ? 'foto' : 'fotos'}
+              </button>
+            </div>
+          )}
 
           {esAdmin && onEliminar && (
             <div className="pt-2">
