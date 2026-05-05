@@ -94,7 +94,6 @@ export default function FormularioReporte({ onEnviar, cargando }) {
             ref={inputGaleria}
             type="file"
             accept="image/*"
-            capture="environment"
             multiple
             onChange={manejarNuevaFoto}
             className="hidden"
